@@ -1,0 +1,422 @@
+-- Querys
+-- Q1: Listar todas las canciones con el nombre de su álbum y artista.
+SELECT c.titulo AS 'Song name', a.titulo AS 'Nombre Album', ar.nombre AS 'Nombre artista'
+FROM canciones c
+JOIN albumes a ON c.id_album = a.id_album 
+JOIN artistas ar ON ar.id_artista = a.id_artista;
+
+-- Q2: Mostrar usuarios y el plan al que están suscritos.
+SELECT u.nombre, s.tipo
+FROM usuarios u
+JOIN suscripciones s ON u.id_suscripcion = s.id_suscripcion;
+
+-- Q3: Ver playlists de cada usuario junto con cuántas canciones contiene. HEMOS includo mas registros para que salga bien esta query
+SELECT u.nombre, p.nombre AS 'Playlist nombre', COUNT(*)
+FROM playlistcancion pc
+JOIN playlists p ON p.id_playlist = pc.id_playlist
+JOIN usuarios u ON u.id_usuario = p.id_usuario
+GROUP BY pc.id_playlist;
+
+-- Q4:Listar historial de reproducción con nombre de usuario y canción.
+SELECT c.titulo, u.nombre, r.fecha_hora 
+FROM reproducciones r
+JOIN canciones c ON c.id_cancion = r.id_cancion
+JOIN usuarios u ON u.id_usuario = r.id_usuario;
+
+-- Q5: ¿Qué usuarios han reproducido canciones de más de 2 artistas distintos?
+SELECT u.nombre, COUNT(DISTINCT a.id_artista) AS artistas_distintos
+FROM Usuarios u
+JOIN Reproducciones r ON u.id_usuario = r.id_usuario
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY u.id_usuario, u.nombre
+HAVING COUNT(DISTINCT a.id_artista) > 2;
+
+
+-- Q6:Usuarios que tienen más de 1 playlist.
+SELECT u.nombre, COUNT(*) AS playlists
+FROM usuarios u
+JOIN playlists p ON p.id_usuario = u.id_usuario
+GROUP BY u.id_usuario
+HAVING COUNT(p.id_playlist) > 1;
+
+-- Q7:Canciones con más reproducciones que el promedio global.
+SELECT c.titulo, COUNT(r.id_reproduccion) AS total_reproducciones
+FROM Canciones c
+JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY c.id_cancion
+HAVING COUNT(r.id_reproduccion) > (
+    SELECT AVG(cant) 
+    FROM (
+        SELECT COUNT(id_reproduccion) AS cant
+        FROM Reproducciones
+        GROUP BY id_cancion
+    ) AS sub
+)
+ORDER BY total_reproducciones DESC;
+
+-- Q8:Artistas con al menos un álbum que tenga más de 2 canciones.
+SELECT ar.nombre, COUNT(id_cancion) AS canciones
+FROM artistas ar
+JOIN albumes a ON a.id_artista = ar.id_artista
+JOIN canciones c ON c.id_album = a.id_album
+GROUP BY ar.id_artista
+HAVING COUNT(c.id_cancion) > 2;
+
+-- Q9:Listar las canciones que están en más de 1 playlist junto con la cantidad de playlists en las que aparecen.
+SELECT c.titulo, COUNT(pc.id_playlist) AS num_playlists
+FROM Canciones c
+JOIN PlaylistCancion pc ON c.id_cancion = pc.id_cancion
+GROUP BY c.id_cancion, c.titulo
+HAVING COUNT(pc.id_playlist) > 1;
+
+-- Q10: Canciones reproducidas por más de 2 usuarios distintos.
+SELECT c.titulo
+FROM reproducciones r 
+JOIN usuarios u ON r.id_usuario = u.id_usuario
+JOIN canciones c ON c.id_cancion = r.id_cancion
+GROUP BY c.id_cancion
+HAVING COUNT(DISTINCT u.id_usuario) > 2;
+
+-- Q11:Top 5 canciones más reproducidas.
+SELECT c.titulo, COUNT(*) AS Count_reproducciones
+FROM canciones c
+JOIN reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY c.id_cancion
+ORDER BY Count_reproducciones DESC
+LIMIT 5;
+
+-- Q12: Mostrar el total de reproducciones por álbum y el nombre del artista correspondiente.
+SELECT al.titulo AS album, ar.nombre AS artista, COUNT(r.id_cancion) AS total_reproducciones
+FROM Albumes al
+JOIN Canciones c ON al.id_album = c.id_album
+JOIN Artistas ar ON al.id_artista = ar.id_artista
+LEFT JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY al.id_album, al.titulo, ar.nombre
+ORDER BY total_reproducciones DESC;
+
+-- Q13: Promedio de duración de canciones por género.
+SELECT AVG(duracion_segundos) AS promedio, ar.genero_principal
+FROM canciones c
+JOIN albumes a ON a.id_album = c.id_album
+JOIN artistas ar ON ar.id_artista = a.id_artista
+GROUP BY ar.genero_principal;
+
+-- Q14: Número de usuarios suscritos a cada plan.
+SELECT s.tipo, COUNT(*) AS userCount
+FROM usuarios u 
+JOIN suscripciones s ON u.id_suscripcion = s.id_suscripcion
+GROUP BY s.tipo;
+
+-- Q15: El usuario con más reproducciones en el historial.
+SELECT u.nombre, COUNT(*) AS CountReproducciones
+FROM usuarios u
+JOIN reproducciones r ON r.id_usuario = u.id_usuario
+GROUP BY u.id_usuario
+ORDER BY CountReproducciones DESC
+LIMIT 1;
+
+-- Q16: Las 10 canciones más reproducidas.
+SELECT c.titulo, COUNT(*) AS count_reproduccion
+FROM canciones c  
+JOIN reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY c.id_cancion
+ORDER BY count_reproduccion DESC
+LIMIT 10;
+
+-- Q17: Usuarios con más de 1 playlist creada
+SELECT u.nombre, COUNT(p.id_playlist) AS num_playlists
+FROM Usuarios u
+JOIN Playlists p ON u.id_usuario = p.id_usuario
+GROUP BY u.id_usuario, u.nombre
+HAVING COUNT(p.id_playlist) > 1;
+
+-- Q18: Listar las playlists con su cantidad respectiva de canciones.
+SELECT pl.nombre, COUNT(*) AS CountCanciones
+FROM playlistcancion pc
+JOIN canciones c ON c.id_cancion = pc.id_cancion
+JOIN playlists pl ON pl.id_playlist = pc.id_playlist
+GROUP BY pc.id_playlist
+ORDER BY CountCanciones DESC;
+
+-- Q19: Listar las canciones reproducidas el último mes -- OJO
+SELECT c.titulo, COUNT(r.id_cancion) AS reproducciones
+FROM Canciones c
+JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+WHERE r.fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)
+GROUP BY c.id_cancion;
+
+-- Q20: Usuarios que escucharon un mismo artista más de 2 veces -- OJO
+SELECT u.nombre, a.nombre AS artista, COUNT(r.id_cancion) AS reproducciones
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+JOIN Usuarios u ON r.id_usuario = u.id_usuario
+GROUP BY u.id_usuario, a.id_artista
+HAVING COUNT(r.id_cancion) > 2;
+
+-- Q21: Canciones con duración mayor al promedio
+SELECT *
+FROM Canciones
+WHERE duracion_segundos > (SELECT AVG(duracion_segundos) FROM Canciones);
+
+-- Q22: Álbum con más reproducciones totales
+SELECT al.titulo, a.nombre AS artista, COUNT(r.id_cancion) AS reproducciones
+FROM Albumes al
+JOIN Canciones c ON al.id_album = c.id_album
+JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY al.id_album
+ORDER BY reproducciones DESC
+LIMIT 1;
+
+-- Q23: Género musical más popular según reproducciones
+-- Suponiendo que Artistas.genero_principal indica el género
+SELECT a.genero_principal, COUNT(r.id_cancion) AS reproducciones
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY a.genero_principal
+ORDER BY reproducciones DESC
+LIMIT 1;
+
+-- Q24: Canciones con duración mayor al promedio
+SELECT titulo, duracion_segundos
+FROM Canciones
+WHERE duracion_segundos > (SELECT AVG(duracion_segundos) FROM Canciones)
+ORDER BY duracion_segundos DESC;
+
+-- Q25: Canciones que nunca han sido reproducidas
+SELECT *
+FROM Canciones c
+LEFT JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+WHERE r.id_cancion IS NULL;
+
+-- Q26: Playlists con canciones de más de 2 géneros diferentes
+-- Se requiere columna género en Canciones o Artist género
+SELECT p.nombre, COUNT(DISTINCT a.genero_principal) AS generos
+FROM Playlists p
+JOIN PlaylistCancion pc ON p.id_playlist = pc.id_playlist
+JOIN Canciones c ON pc.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY p.id_playlist
+HAVING COUNT(DISTINCT a.genero_principal) > 2;
+
+-- Q27: Usuarios que escucharon canciones de al menos 3 artistas distintos
+SELECT u.nombre, COUNT(DISTINCT a.id_artista) AS artistas
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+JOIN Usuarios u ON r.id_usuario = u.id_usuario
+GROUP BY u.id_usuario
+HAVING COUNT(DISTINCT a.id_artista) >= 3;
+
+-- Q28: Ranking de artistas por número de oyentes únicos
+SELECT a.nombre, COUNT(DISTINCT r.id_usuario) AS oyentes
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY a.id_artista
+ORDER BY oyentes DESC;
+
+-- Q29: Plan con mayor ingreso generado (precio * suscriptores)
+SELECT s.tipo, COUNT(u.id_usuario) AS suscriptores, COUNT(u.id_usuario)*s.precio AS ingreso
+FROM Suscripciones s
+JOIN Usuarios u ON u.id_suscripcion = s.id_suscripcion
+GROUP BY s.id_suscripcion
+ORDER BY ingreso DESC
+LIMIT 1;
+
+-- Q30: Playlists con canciones de al menos 2 géneros distintos
+SELECT p.nombre AS playlist, COUNT(DISTINCT ar.genero_principal) AS num_generos
+FROM Playlists p
+JOIN PlaylistCancion pc ON p.id_playlist = pc.id_playlist
+JOIN Canciones c ON pc.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas ar ON al.id_artista = ar.id_artista
+GROUP BY p.id_playlist, p.nombre
+HAVING COUNT(DISTINCT ar.genero_principal) >= 2;
+
+-- Q31: Listar los 5 artistas con mayor cantidad de canciones en la plataforma
+SELECT a.nombre, COUNT(c.id_cancion) AS total_canciones
+FROM Artistas a
+JOIN Albumes al ON a.id_artista = al.id_artista
+JOIN Canciones c ON al.id_album = c.id_album
+GROUP BY a.id_artista
+ORDER BY total_canciones DESC
+LIMIT 5;
+
+-- Q32: Mostrar los álbumes lanzados después del año 2020 junto con su artista
+SELECT al.titulo AS album, a.nombre AS artista, al.fecha_lanzamiento
+FROM Albumes al
+JOIN Artistas a ON al.id_artista = a.id_artista
+WHERE YEAR(al.fecha_lanzamiento) > 2020;
+
+-- Q33: Obtener los usuarios que nunca han creado una playlist -- OJO
+SELECT *
+FROM Usuarios u
+LEFT JOIN Playlists p ON u.id_usuario = p.id_usuario
+WHERE p.id_playlist IS NULL;
+
+-- Q34: Mostrar las canciones que aparecen en más de 2 playlists distintas
+SELECT c.titulo, COUNT(DISTINCT pc.id_playlist) AS total_playlists
+FROM Canciones c
+JOIN PlaylistCancion pc ON c.id_cancion = pc.id_cancion
+GROUP BY c.id_cancion
+HAVING COUNT(DISTINCT pc.id_playlist) > 2;
+
+-- Q35: Listar los artistas que tienen canciones con más de 1,000 reproducciones 
+SELECT a.nombre, COUNT(r.id_cancion) AS reproducciones
+FROM Artistas a
+JOIN Albumes al ON a.id_artista = al.id_artista
+JOIN Canciones c ON al.id_album = c.id_album
+JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY a.id_artista
+HAVING COUNT(r.id_cancion) > 1000;
+
+-- Q36: Mostrar el top 3 de usuarios con más canciones reproducidas en total
+SELECT u.nombre, COUNT(r.id_cancion) AS total_reproducciones
+FROM Usuarios u
+JOIN Reproducciones r ON u.id_usuario = r.id_usuario
+GROUP BY u.id_usuario
+ORDER BY total_reproducciones DESC
+LIMIT 3;
+
+-- Q37: Listar las playlists que contienen al menos una canción de cada género musical -- OJO
+-- Ajustado a los géneros existentes: se cuenta géneros distintos por playlist
+SELECT p.nombre, COUNT(DISTINCT a.genero_principal) AS generos
+FROM Playlists p
+JOIN PlaylistCancion pc ON p.id_playlist = pc.id_playlist
+JOIN Canciones c ON pc.id_cancion = c.id_cancion
+JOIN Albumes al ON c.id_album = al.id_album
+JOIN Artistas a ON al.id_artista = a.id_artista
+GROUP BY p.id_playlist
+HAVING COUNT(DISTINCT a.genero_principal) = (SELECT COUNT(DISTINCT genero_principal) FROM Artistas);
+
+-- Q38: Ranking de artistas por número de reproducciones totales
+SELECT ar.nombre AS artista, COUNT(r.id_cancion) AS total_reproducciones
+FROM Artistas ar
+JOIN Albumes al ON ar.id_artista = al.id_artista
+JOIN Canciones c ON al.id_album = c.id_album
+LEFT JOIN Reproducciones r ON c.id_cancion = r.id_cancion
+GROUP BY ar.id_artista, ar.nombre
+ORDER BY total_reproducciones DESC;
+
+-- Q39: Usuarios que han reproducido canciones en los últimos 7 días
+SELECT u.nombre, COUNT(r.id_cancion) AS total_reproducciones
+FROM Usuarios u
+JOIN Reproducciones r ON u.id_usuario = r.id_usuario
+WHERE r.fecha_hora >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+GROUP BY u.id_usuario, u.nombre
+ORDER BY total_reproducciones DESC;
+
+-- Q40: Mostrar los álbumes con la duración promedio de sus canciones
+SELECT al.titulo, AVG(c.duracion_segundos) AS duracion_promedio
+FROM Albumes al
+JOIN Canciones c ON al.id_album = c.id_album
+GROUP BY al.id_album;
+
+-- Q41: Obtener los artistas que no tienen ningún álbum registrado -- OJO
+SELECT *
+FROM Artistas a
+LEFT JOIN Albumes al ON a.id_artista = al.id_artista
+WHERE al.id_album IS NULL;
+
+-- Q42: Canciones más reproducidas por cada usuario (una por usuario)
+SELECT u.nombre, c.titulo, COUNT(r.id_cancion) AS reproducciones
+FROM Usuarios u
+JOIN Reproducciones r ON u.id_usuario = r.id_usuario
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+GROUP BY u.id_usuario, c.id_cancion
+HAVING COUNT(r.id_cancion) = (
+    SELECT MAX(cnt)
+    FROM (
+        SELECT COUNT(r2.id_cancion) AS cnt
+        FROM Reproducciones r2
+        WHERE r2.id_usuario = u.id_usuario
+        GROUP BY r2.id_cancion
+    ) AS sub
+)
+ORDER BY u.nombre;
+
+-- Q43: Mostrar las canciones más reproducidas por cada usuario (una por usuario)
+SELECT r.id_usuario, u.nombre, c.titulo, COUNT(*) AS total_reproducciones
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Usuarios u ON r.id_usuario = u.id_usuario
+GROUP BY r.id_usuario, c.id_cancion
+ORDER BY total_reproducciones DESC;
+
+-- Q44: Listar el top 5 de canciones más agregadas a playlists
+SELECT c.titulo, COUNT(pc.id_playlist) AS veces_en_playlists
+FROM Canciones c
+JOIN PlaylistCancion pc ON c.id_cancion = pc.id_cancion
+GROUP BY c.id_cancion
+ORDER BY veces_en_playlists DESC
+LIMIT 5;
+
+-- Q45: Mostrar el plan con menor número de usuarios suscritos
+SELECT s.tipo, COUNT(u.id_usuario) AS suscriptores
+FROM Suscripciones s
+LEFT JOIN Usuarios u ON s.id_suscripcion = u.id_suscripcion
+GROUP BY s.id_suscripcion
+ORDER BY suscriptores ASC
+LIMIT 1;
+
+-- Q46: Listar las canciones reproducidas por usuarios de un país específico (ej: México)
+SELECT c.titulo, u.nombre, u.pais
+FROM Reproducciones r
+JOIN Canciones c ON r.id_cancion = c.id_cancion
+JOIN Usuarios u ON r.id_usuario = u.id_usuario
+WHERE u.pais = 'México';
+
+-- Q47: Mostrar los artistas cuyo género principal coincide con el género más popular en reproducciones
+SELECT a.nombre, a.genero_principal
+FROM Artistas a
+WHERE a.genero_principal = (
+    SELECT a2.genero_principal
+    FROM Reproducciones r
+    JOIN Canciones c ON r.id_cancion = c.id_cancion
+    JOIN Albumes al ON c.id_album = al.id_album
+    JOIN Artistas a2 ON al.id_artista = a2.id_artista
+    GROUP BY a2.genero_principal
+    ORDER BY COUNT(r.id_cancion) DESC
+    LIMIT 1
+);
+
+-- Q48: Listar los usuarios que tienen al menos una playlist con más de 5 canciones -- OJO
+SELECT u.nombre, p.nombre AS playlist, COUNT(pc.id_cancion) AS total_canciones
+FROM Usuarios u
+JOIN Playlists p ON u.id_usuario = p.id_usuario
+JOIN PlaylistCancion pc ON p.id_playlist = pc.id_playlist
+GROUP BY p.id_playlist
+HAVING COUNT(pc.id_cancion) > 5;
+
+-- Q49: Mostrar los usuarios que comparten canciones en común en sus playlists
+SELECT DISTINCT u1.nombre AS usuario1, u2.nombre AS usuario2, c.titulo
+FROM PlaylistCancion pc1
+JOIN PlaylistCancion pc2 ON pc1.id_cancion = pc2.id_cancion AND pc1.id_playlist <> pc2.id_playlist
+JOIN Playlists p1 ON pc1.id_playlist = p1.id_playlist
+JOIN Playlists p2 ON pc2.id_playlist = p2.id_playlist
+JOIN Usuarios u1 ON p1.id_usuario = u1.id_usuario
+JOIN Usuarios u2 ON p2.id_usuario = u2.id_usuario
+JOIN Canciones c ON pc1.id_cancion = c.id_cancion;
+
+-- Q50: Listar los artistas que tienen canciones en playlists de más de 5 usuarios diferentes -- OJO
+SELECT a.nombre, COUNT(DISTINCT p.id_usuario) AS usuarios
+FROM Artistas a
+JOIN Albumes al ON a.id_artista = al.id_artista
+JOIN Canciones c ON al.id_album = c.id_album
+JOIN PlaylistCancion pc ON c.id_cancion = pc.id_cancion
+JOIN Playlists p ON pc.id_playlist = p.id_playlist
+GROUP BY a.id_artista
+HAVING COUNT(DISTINCT p.id_usuario) > 5;
+
+
+

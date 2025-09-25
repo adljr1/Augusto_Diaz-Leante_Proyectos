@@ -1,0 +1,287 @@
+-- 1. Usuarios
+CREATE TABLE Usuarios (
+    id_usuario INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    pais VARCHAR(50),
+    fecha_registro DATE NOT NULL,
+    id_suscripcion INT,
+    FOREIGN KEY (id_suscripcion) REFERENCES Suscripciones(id_suscripcion)
+);
+
+-- 2. Suscripciones
+CREATE TABLE Suscripciones (
+    id_suscripcion INT PRIMARY KEY AUTO_INCREMENT,
+    tipo VARCHAR(50) NOT NULL,   -- Free, Premium, Family, etc.
+    precio DECIMAL(5,2) NOT NULL
+);
+
+-- 3. Artistas
+CREATE TABLE Artistas (
+    id_artista INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    genero_principal VARCHAR(50),
+    pais_origen VARCHAR(50)
+);
+
+-- 4. Álbumes
+CREATE TABLE Albumes (
+    id_album INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    fecha_lanzamiento DATE,
+    id_artista INT NOT NULL,
+    FOREIGN KEY (id_artista) REFERENCES Artistas(id_artista) -- N-1 varios albumes
+);
+
+-- 5. Canciones
+CREATE TABLE Canciones (
+    id_cancion INT PRIMARY KEY AUTO_INCREMENT,
+    titulo VARCHAR(150) NOT NULL,
+    duracion_segundos INT,
+    id_album INT,
+    FOREIGN KEY (id_album) REFERENCES Albumes(id_album)
+);
+
+-- Relación N:M entre Canciones y Artistas (colaboraciones)
+CREATE TABLE CancionArtista (
+    id_cancion INT,
+    id_artista INT,
+    PRIMARY KEY (id_cancion, id_artista),
+    FOREIGN KEY (id_cancion) REFERENCES Canciones(id_cancion),
+    FOREIGN KEY (id_artista) REFERENCES Artistas(id_artista)
+);
+
+-- 6. Playlists
+CREATE TABLE Playlists (
+    id_playlist INT PRIMARY KEY AUTO_INCREMENT,
+    nombre VARCHAR(100) NOT NULL,
+    fecha_creacion DATE,
+    id_usuario INT NOT NULL,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+);
+
+-- Relación N:M entre Playlists y Canciones
+CREATE TABLE PlaylistCancion (
+    id_playlist INT,
+    id_cancion INT,
+    PRIMARY KEY (id_playlist, id_cancion),
+    FOREIGN KEY (id_playlist) REFERENCES Playlists(id_playlist),
+    FOREIGN KEY (id_cancion) REFERENCES Canciones(id_cancion)
+);
+
+-- 7. Reproducciones
+CREATE TABLE Reproducciones (
+    id_reproduccion INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    id_cancion INT NOT NULL,
+    fecha_hora DATETIME NOT NULL,
+    dispositivo VARCHAR(50),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_cancion) REFERENCES Canciones(id_cancion)
+);
+
+-- INSERTS
+
+INSERT INTO Suscripciones (tipo, precio) VALUES
+('Free', 0.00),
+('Premium', 9.99),
+('Family', 14.99),
+('Student', 4.99),
+('Premium Duo', 12.99),
+('Premium Individual', 9.99),
+('Family Plus', 15.99),
+('Free Limited', 0.00),
+('Premium Annual', 99.99),
+('Student Annual', 49.99),
+('Family Annual', 149.99),
+('Trial 1 Month', 0.00),
+('Trial 3 Months', 0.00),
+('Premium 6 Months', 59.99),
+('Student 6 Months', 29.99);
+
+INSERT INTO Usuarios (nombre, email, pais, fecha_registro, id_suscripcion) VALUES
+('Ana Gómez', 'ana@gmail.com', 'España', '2023-06-15', 2),
+('Carlos Ruiz', 'carlos@gmail.com', 'México', '2024-01-12', 1),
+('Lucía Martínez', 'lucia@gmail.com', 'Argentina', '2023-03-20', 3),
+('Jorge Pérez', 'jorge@gmail.com', 'Colombia', '2022-11-05', 2),
+('María López', 'maria@gmail.com', 'España', '2023-12-01', 5),
+('Pedro Sánchez', 'pedro@gmail.com', 'Chile', '2024-02-14', 6),
+('Sofía Torres', 'sofia@gmail.com', 'Perú', '2023-08-23', 2),
+('David Fernández', 'david@gmail.com', 'Uruguay', '2023-05-10', 4),
+('Isabel Ramírez', 'isabel@gmail.com', 'España', '2024-01-01', 2),
+('Miguel Ángel', 'miguel@gmail.com', 'México', '2023-07-30', 7),
+('Valeria Díaz', 'valeria@gmail.com', 'Argentina', '2024-03-02', 6),
+('Raúl Herrera', 'raul@gmail.com', 'Colombia', '2023-10-15', 2),
+('Patricia Vargas', 'patricia@gmail.com', 'Perú', '2023-09-12', 2),
+('Javier Castillo', 'javier@gmail.com', 'Chile', '2024-04-05', 5),
+('Claudia Méndez', 'claudia@gmail.com', 'Uruguay', '2023-11-20', 1);
+
+INSERT INTO Artistas (nombre, genero_principal, pais_origen) VALUES
+('Dua Lipa', 'Pop', 'Reino Unido'),
+('Bad Bunny', 'Reguetón', 'Puerto Rico'),
+('Adele', 'Pop', 'Reino Unido'),
+('Coldplay', 'Rock', 'Reino Unido'),
+('Taylor Swift', 'Pop', 'EE.UU.'),
+('Ed Sheeran', 'Pop', 'Reino Unido'),
+('Shakira', 'Pop', 'Colombia'),
+('The Weeknd', 'R&B', 'Canadá'),
+('Billie Eilish', 'Pop', 'EE.UU.'),
+('Drake', 'Hip-Hop', 'Canadá'),
+('Bruno Mars', 'Pop', 'EE.UU.'),
+('Imagine Dragons', 'Rock', 'EE.UU.'),
+('Rihanna', 'Pop', 'Barbados'),
+('Kendrick Lamar', 'Hip-Hop', 'EE.UU.'),
+('Ariana Grande', 'Pop', 'EE.UU.');
+
+INSERT INTO Albumes (titulo, fecha_lanzamiento, id_artista) VALUES
+('Future Nostalgia', '2020-03-27', 1),
+('Un Verano Sin Ti', '2022-05-06', 2),
+('30', '2021-11-19', 3),
+('Everyday Life', '2019-11-22', 4),
+('1989', '2014-10-27', 5),
+('Divide', '2017-03-03', 6),
+('El Dorado', '2017-05-26', 7),
+('After Hours', '2020-03-20', 8),
+('Happier Than Ever', '2021-07-30', 9),
+('Certified Lover Boy', '2021-09-03', 10),
+('24K Magic', '2016-11-18', 11),
+('Evolve', '2017-06-23', 12),
+('ANTI', '2016-01-28', 13),
+('DAMN.', '2017-04-14', 14),
+('Positions', '2020-10-30', 15);
+
+INSERT INTO Canciones (titulo, duracion_segundos, id_album) VALUES
+('Levitating', 203, 1),
+('Me Porto Bonito', 180, 2),
+('Easy On Me', 224, 3),
+('Orphans', 261, 4),
+('Shake It Off', 242, 5),
+('Shape of You', 233, 6),
+('Chantaje', 209, 7),
+('Blinding Lights', 200, 8),
+('Lost Cause', 215, 9),
+('Way 2 Sexy', 242, 10),
+('24K Magic', 228, 11),
+('Believer', 204, 12),
+('Work', 210, 13),
+('HUMBLE.', 177, 14),
+('Positions', 173, 15);
+
+INSERT INTO Playlists (nombre, fecha_creacion, id_usuario) VALUES
+('Favoritas Ana', '2024-01-01', 1),
+('Hits Carlos', '2024-02-01', 2),
+('Pop Total', '2024-03-01', 3),
+('Rock Classics', '2024-04-01', 4),
+('Reguetón Party', '2024-05-01', 5),
+('Chill Vibes', '2024-06-01', 6),
+('Workout', '2024-07-01', 7),
+('Romantic Songs', '2024-08-01', 8),
+('Hip-Hop Flow', '2024-09-01', 9),
+('Summer Hits', '2024-10-01', 10),
+('Throwback', '2024-11-01', 11),
+('Top 2024', '2024-12-01', 12),
+('Mood Booster', '2024-12-15', 13),
+('Evening Chill', '2024-12-20', 14),
+('Focus Music', '2024-12-25', 15);
+
+INSERT INTO PlaylistCancion (id_playlist, id_cancion) VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5),
+(6, 6),
+(7, 7),
+(8, 8),
+(9, 9),
+(10, 10),
+(11, 11),
+(12, 12),
+(13, 13),
+(14, 14),
+(15, 15);
+
+INSERT INTO Reproducciones (id_usuario, id_cancion, fecha_hora, dispositivo) VALUES
+(1, 1, '2024-05-01 10:00:00', 'Móvil'),
+(2, 2, '2024-05-01 11:00:00', 'PC'),
+(3, 3, '2024-05-02 12:00:00', 'Tablet'),
+(4, 4, '2024-05-03 13:00:00', 'Móvil'),
+(5, 5, '2024-05-04 14:00:00', 'PC'),
+(6, 6, '2024-05-05 15:00:00', 'Tablet'),
+(7, 7, '2024-05-06 16:00:00', 'Móvil'),
+(8, 8, '2024-05-07 17:00:00', 'PC'),
+(9, 9, '2024-05-08 18:00:00', 'Tablet'),
+(10, 10, '2024-05-09 19:00:00', 'Móvil'),
+(11, 11, '2024-05-10 20:00:00', 'PC'),
+(12, 12, '2024-05-11 21:00:00', 'Tablet'),
+(13, 13, '2024-05-12 22:00:00', 'Móvil'),
+(14, 14, '2024-05-13 23:00:00', 'PC'),
+(15, 15, '2024-05-14 09:00:00', 'Tablet');
+
+INSERT INTO Canciones (titulo, duracion_segundos, id_album) VALUES
+('Test', 203, 14),
+('TEST2', 180, 14);
+
+INSERT INTO PlaylistCancion (id_playlist, id_cancion) VALUES
+(14, 18),
+(14, 19);
+
+-- Supongamos que estos usuarios ya existen con id_usuario del 1 al 5
+
+-- Ana Gómez (id_usuario = 1) tendrá 3 playlists
+INSERT INTO Playlists (nombre, fecha_creacion, id_usuario) VALUES
+('Favoritas Ana', '2024-01-01', 1),
+('Pop Hits Ana', '2024-02-01', 1),
+('Chill Vibes Ana', '2024-03-01', 1);
+
+-- Carlos Ruiz (id_usuario = 2) tendrá 2 playlists
+INSERT INTO Playlists (nombre, fecha_creacion, id_usuario) VALUES
+('Hits Carlos', '2024-01-15', 2),
+('Rock Classics Carlos', '2024-02-20', 2);
+
+-- Lucía Martínez (id_usuario = 3) tendrá 2 playlists
+INSERT INTO Playlists (nombre, fecha_creacion, id_usuario) VALUES
+('Pop Total Lucía', '2024-03-05', 3),
+('Workout Lucía', '2024-04-10', 3);
+
+-- Supongamos que ya tenemos 15 canciones con id_cancion del 1 al 15
+
+-- Ana Gómez
+INSERT INTO PlaylistCancion (id_playlist, id_cancion) VALUES
+ (1, 2), (1, 3),        -- Favoritas Ana
+(2, 1), (2, 4), (2, 5),        -- Pop Hits Ana
+(3, 2), (3, 6), (3, 7);        -- Chill Vibes Ana
+
+-- Carlos Ruiz
+INSERT INTO PlaylistCancion (id_playlist, id_cancion) VALUES
+(4, 8), (4, 9), (4, 10),       -- Hits Carlos
+(5, 4), (5, 11), (5, 12);      -- Rock Classics Carlos
+
+-- Lucía Martínez
+INSERT INTO PlaylistCancion (id_playlist, id_cancion) VALUES
+(6, 1), (6, 5), (6, 9),        -- Pop Total Lucía
+(7, 2), (7, 3), (7, 6);        -- Workout Lucía
+
+
+-- Ana Gómez escucha varias canciones de diferentes playlists
+INSERT INTO Reproducciones (id_usuario, id_cancion, fecha_hora, dispositivo) VALUES
+(1, 1, '2024-05-01 10:00:00', 'Móvil'),
+(1, 2, '2024-05-01 10:15:00', 'Móvil'),
+(1, 3, '2024-05-01 10:30:00', 'PC'),
+(1, 4, '2024-05-02 11:00:00', 'Tablet'),
+(1, 5, '2024-05-03 12:00:00', 'Móvil'),
+(1, 6, '2024-05-04 13:00:00', 'PC');
+
+-- Carlos Ruiz
+INSERT INTO Reproducciones (id_usuario, id_cancion, fecha_hora, dispositivo) VALUES
+(2, 8, '2024-05-01 14:00:00', 'PC'),
+(2, 9, '2024-05-01 14:15:00', 'PC'),
+(2, 10, '2024-05-01 14:30:00', 'Móvil'),
+(2, 4, '2024-05-02 15:00:00', 'Tablet');
+
+-- Lucía Martínez
+INSERT INTO Reproducciones (id_usuario, id_cancion, fecha_hora, dispositivo) VALUES
+(3, 1, '2024-05-01 16:00:00', 'Móvil'),
+(3, 5, '2024-05-01 16:30:00', 'PC'),
+(3, 9, '2024-05-01 17:00:00', 'Tablet'),
+(3, 2, '2024-05-02 18:00:00', 'Móvil');
